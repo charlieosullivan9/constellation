@@ -1,0 +1,73 @@
+// Import necessary libraries
+const vision = require('@google-cloud/vision');
+const fs = require('fs');
+
+// Create a new instance of the client
+const client = new vision.ImageAnnotatorClient();
+
+// Define the function to recognize the constellation
+async function recognizeConstellation(imagePath) {
+  try {
+    // Read the image file
+    const image = await fs.promises.readFile(imagePath);
+
+    // Make a request to the Vision API to annotate the image
+    const [result] = await client.annotateImage({
+      image: { content: image },
+      features: [{ type: 'LABEL_DETECTION' }],
+    });
+
+    // Get the labels from the result
+    const labels = result.labelAnnotations;
+
+    // Find the label representing the constellation
+    const constellationLabel = labels.find(label => label.description.toLowerCase().includes('constellation'));
+
+    if (constellationLabel) {
+      // Get the recognized constellation name
+      const constellationName = constellationLabel.description;
+
+      // Return the brief information about the constellation
+      return getConstellationInfo(constellationName);
+    } else {
+      throw new Error('Constellation not found in the image');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+// Function to get information about the constellation
+function getConstellationInfo(constellationName) {
+  // Perform a lookup or API call to retrieve the brief information about the constellation
+  // You can use any data source or API of your choice to get the information
+  
+  // Example: Using a hardcoded data object for demonstration purposes
+  const constellationData = {
+    orion: {
+      name: 'Orion',
+      description: 'Orion is a prominent constellation located on the celestial equator and visible throughout the world.',
+      // Add any other relevant information
+    },
+    ursaMajor: {
+      name: 'Ursa Major',
+      description: 'Ursa Major is a constellation in the northern sky, known as the Great Bear.',
+      // Add any other relevant information
+    },
+    // Add more constellation data as needed
+  };
+
+  const formattedConstellationName = constellationName.toLowerCase().replace('constellation', '').trim();
+
+  if (formattedConstellationName in constellationData) {
+    const constellation = constellationData[formattedConstellationName];
+    return `${constellation.name}: ${constellation.description}`;
+  } else {
+    return 'Information not available for this constellation';
+  }
+}
+
+// Usage example
+recognizeConstellation('path/to/your/image.jpg')
+  .then(result => console.log(result))
+  .catch(error => console.error('Error:', error));
